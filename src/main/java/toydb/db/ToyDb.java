@@ -10,15 +10,13 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ToyDb implements IToyDb {
     private Comparator<String> keyComparator;
     private AtomicReference<IMemTable> memTable;
     private ToyDbConfiguration configuration;
     private ISSTableWriter sstableWriter;
+    private ISSTableReader ssTableReader;
     private SSTablesManager ssTablesManager;
 
     public ToyDb(ToyDbConfiguration configuration) {
@@ -28,9 +26,9 @@ public class ToyDb implements IToyDb {
         this.configuration = configuration;
         this.memTable = new AtomicReference<>(getNewMemTable(configuration));
         this.keyComparator = configuration.getKeyComparator();
-        this.sstableWriter = new SSTableWriter(new TableEntryStringSerializer(),
-                configuration.getBaseDir());
-        ssTablesManager = new SSTablesManager(this.sstableWriter);
+        this.sstableWriter = new SSTableWriter(new TableEntryBinarySerializer());
+        this.ssTableReader = new SSTableReader(new TableEntryBinarySerializer());
+        ssTablesManager = new SSTablesManager(this.sstableWriter, this.ssTableReader);
 
         Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
                 () -> flushMemTableToDisk(configuration), 0, 2, TimeUnit.SECONDS);
@@ -73,7 +71,7 @@ public class ToyDb implements IToyDb {
         if (table.size() >= configuration.getMemtableFlushThreshold()) {
             System.out.printf("DiskIO memtable-size: %d\n", table.size());
             IMemTable tmpTable = memTable.getAndSet(getNewMemTable(configuration));
-            ssTablesManager.flush(new SSTableMetaInformation(tmpTable));
+            ssTablesManager.flush(new SSTableMetaInformation(tmpTable, configuration.getBaseDir()));
         }
     }
 }

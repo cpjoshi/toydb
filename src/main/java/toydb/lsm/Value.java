@@ -17,6 +17,12 @@ public class Value <T> {
         lastCRUDOperationTimeStamp = System.currentTimeMillis();
     }
 
+    public Value(T val, boolean deleted, long lastCRUDOperationTimeStamp) {
+        this.val = val;
+        this.deleted = deleted;
+        this.lastCRUDOperationTimeStamp = lastCRUDOperationTimeStamp;
+    }
+
     public boolean isDeleted() {
         return deleted;
     }

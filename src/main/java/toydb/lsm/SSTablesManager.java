@@ -4,10 +4,12 @@ import java.util.TreeMap;
 
 public class SSTablesManager {
     private ISSTableWriter writer;
+    private ISSTableReader ssTableReader;
     private TreeMap<Long, SSTableMetaInformation> sstables = new TreeMap<>((o1, o2) -> o2.compareTo(o1));
 
-    public SSTablesManager(ISSTableWriter ssTableWriter) {
+    public SSTablesManager(ISSTableWriter ssTableWriter, ISSTableReader ssTableReader) {
         this.writer = ssTableWriter;
+        this.ssTableReader = ssTableReader;
     }
 
     public void flush(SSTableMetaInformation ssTableMetaInformation) {
