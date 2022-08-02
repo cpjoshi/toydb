@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import toydb.common.Response;
 import toydb.common.StatusCode;
-import toydb.lsm.MemTableConcurrentSkipListMap;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -27,6 +26,7 @@ class ToyDbTest {
                 })
                 .build();
 
+        Assertions.assertTrue(config.getMemtableFlushThreshold() > 0);
         IToyDb toyDb = new ToyDb(config);
 
         String guid = UUID.randomUUID().toString();
@@ -49,7 +49,7 @@ class ToyDbTest {
                         return o1.compareTo(o2);
                     }
                 })
-                .with(9)
+                .withMemTableFlushThreshold(9)
                 .build();
 
         IToyDb toyDb = new ToyDb(config);
@@ -94,7 +94,7 @@ class ToyDbTest {
                         return o1.compareTo(o2);
                     }
                 })
-                .with(9)
+                .withMemTableFlushThreshold(9)
                 .build();
 
         IToyDb toyDb = new ToyDb(config);

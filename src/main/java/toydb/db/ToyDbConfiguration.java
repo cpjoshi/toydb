@@ -35,7 +35,7 @@ public class ToyDbConfiguration {
 
     public static class ToyDbConfigurationBuilder {
         private Comparator<String> keyComparator;
-        private int memtableFlushThreshold;
+        private int memtableFlushThreshold = 100;
         private MemTableType memTableType;
         private String baseDir = "./toydbfiles";
 
@@ -61,7 +61,7 @@ public class ToyDbConfiguration {
             return this;
         }
 
-        public ToyDbConfigurationBuilder with(int memtableFlushThreshold) {
+        public ToyDbConfigurationBuilder withMemTableFlushThreshold(int memtableFlushThreshold) {
             this.memtableFlushThreshold = memtableFlushThreshold;
             return this;
         }
