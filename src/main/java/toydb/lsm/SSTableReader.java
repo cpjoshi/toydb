@@ -3,6 +3,7 @@ package toydb.lsm;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -40,8 +41,11 @@ public class SSTableReader implements ISSTableReader {
 
         try (
                 RandomAccessFile file = new RandomAccessFile(sstableInfo.getSsTableFilePath().toString(), "r");
+                FileChannel fc = file.getChannel();
         ) {
-            MappedByteBuffer buf = file.getChannel().map(FileChannel.MapMode.READ_ONLY, startPosition, endPosition-startPosition);
+            ByteBuffer buf = ByteBuffer.allocate(endPosition-startPosition);
+            fc.read(buf, startPosition);
+            buf.position(0);
             return this.serializer.deserialize(buf);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

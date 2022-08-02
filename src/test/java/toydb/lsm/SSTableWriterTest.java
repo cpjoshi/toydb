@@ -1,9 +1,14 @@
 package toydb.lsm;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +17,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SSTableWriterTest {
 
-    private String baseDir = "C:\\Users\\chjos\\toydbfiles\\tests";
+    static private Path testsPath = Paths.get("./toydbTestFiles");
+
+    @BeforeAll
+    static void setup() throws IOException {
+        if(!Files.exists(testsPath)) {
+            Files.createDirectory(testsPath);
+        }
+    }
 
     @Test
     void testReadFlushedSSTable() throws IOException {
@@ -25,7 +37,7 @@ class SSTableWriterTest {
 
         Arrays.stream(keys).forEach(k -> memTable.set(k, String.format("value-%s", k)));
         SSTableWriter writer = new SSTableWriter(new TableEntryBinarySerializer());
-        SSTableMetaInformation ssTableMetaInformation = new SSTableMetaInformation(memTable, baseDir);
+        SSTableMetaInformation ssTableMetaInformation = new SSTableMetaInformation(memTable, testsPath.toString());
         writer.flush(ssTableMetaInformation);
 
         SSTableReader ssTableReader = new SSTableReader(new TableEntryBinarySerializer());
@@ -41,5 +53,8 @@ class SSTableWriterTest {
         Arrays.stream(keys).forEach(k -> {
             Assertions.assertEquals(String.format("value-%s", k), ssTableReader.get(k, ssTableMetaInformation).get(k).getVal());
         });
+
+        //cleanup
+        Files.deleteIfExists(ssTableMetaInformation.getSsTableFilePath());
     }
 }

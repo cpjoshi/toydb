@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ public class TableEntryBinarySerializer implements ITableEntrySerializer {
     }
 
     @Override
-    public Map<String, Value<String>> deserialize(MappedByteBuffer buf) {
+    public Map<String, Value<String>> deserialize(ByteBuffer buf) {
         HashMap<String, Value<String>> hashMap = new HashMap<>();
         while(buf.position() < buf.limit()) {
             try {
