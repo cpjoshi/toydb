@@ -11,5 +11,6 @@ public interface IMemTable {
     StatusCode set(String key, String value);
     StatusCode delete(String key);
     Set<Map.Entry<String, Value>> entrySet();
+    Boolean containsKey(String key);
     long size();
 }

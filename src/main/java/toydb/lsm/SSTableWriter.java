@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +37,7 @@ public class SSTableWriter implements ISSTableWriter {
     }
 
     public StatusCode flush(SSTableMetaInformation sstableMetaData) throws IOException {
+        IMemTable memTable = sstableMetaData.acquireMemtableReference();
         try (
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
@@ -48,7 +48,6 @@ public class SSTableWriter implements ISSTableWriter {
             // 1. write this in the byte buffer chunks.
             // 2. Chunks can be independently compressed and encrypted.
             int entryNumber = 0;
-            IMemTable memTable = sstableMetaData.getMemTable();
             for (Map.Entry<String, Value> entry : memTable.entrySet()) {
                 int entryStartOffset = out.size();
                 this.serializer.serialize(entry, out);
@@ -73,6 +72,8 @@ public class SSTableWriter implements ISSTableWriter {
             //    System.out.printf("%s-%d\n", indexEntry.getKey(), indexEntry.getValue());
             //}
             return StatusCode.Ok;
+        } finally {
+            sstableMetaData.releaseMemtableReference();
         }
     }
 }

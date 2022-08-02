@@ -40,6 +40,11 @@ public class MemTableConcurrentSkipListMap implements IMemTable {
     }
 
     @Override
+    public Boolean containsKey(String key) {
+        return kvMap.containsKey(key);
+    }
+
+    @Override
     public long size() {
         return kvMap.size();
     }
