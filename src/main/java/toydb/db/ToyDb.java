@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,6 +19,7 @@ public class ToyDb implements IToyDb {
     private ISSTableWriter sstableWriter;
     private ISSTableReader ssTableReader;
     private SSTablesManager ssTablesManager;
+    private ScheduledExecutorService memTablePeriodicFlushService;
 
     public ToyDb(ToyDbConfiguration configuration) {
         if (configuration == null) {
@@ -30,7 +32,8 @@ public class ToyDb implements IToyDb {
         this.ssTableReader = new SSTableReader(new TableEntryBinarySerializer());
         ssTablesManager = new SSTablesManager(this.sstableWriter, this.ssTableReader);
 
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(
+        memTablePeriodicFlushService = Executors.newScheduledThreadPool(1);
+        memTablePeriodicFlushService.scheduleAtFixedRate(
                 () -> flushMemTableToDisk(configuration), 0, 2, TimeUnit.SECONDS);
     }
 
@@ -41,7 +44,11 @@ public class ToyDb implements IToyDb {
     @Override
     public Response<String> get(String key) {
         IMemTable table = memTable.get();
-        return table.get(key);
+        if(table.containsKey(key)) {
+            return table.get(key);
+        }
+
+        return ssTablesManager.get(key);
     }
 
     @Override

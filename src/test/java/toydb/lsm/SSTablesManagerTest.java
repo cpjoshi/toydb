@@ -80,20 +80,22 @@ class SSTablesManagerTest {
         }
 
         int value_recency_1 = 1;
+        Long timeStamp = System.currentTimeMillis();
         IMemTable memTable1 = new MemTableConcurrentSkipListMap();
         Arrays.stream(keys).forEach(k -> memTable1.set(k, String.format("value-%s-%d", k, value_recency_1)));
-        SSTableMetaInformation ssTableMetaInformation1 = new SSTableMetaInformation(memTable1, testsPath.toString());
+        SSTableMetaInformation ssTableMetaInformation1 = new SSTableMetaInformation(memTable1, testsPath.toString(), timeStamp);
         tablesManager.flush(ssTableMetaInformation1);
 
         int value_recency_2 = 2;
         IMemTable memTable2 = new MemTableConcurrentSkipListMap();
         Arrays.stream(keys).forEach(k -> memTable2.set(k, String.format("value-%s-%d", k, value_recency_2)));
-        SSTableMetaInformation ssTableMetaInformation2 = new SSTableMetaInformation(memTable2, testsPath.toString());
-        tablesManager.flush(ssTableMetaInformation2);
+        SSTableMetaInformation ssTableMetaInformation2 = new SSTableMetaInformation(memTable2, testsPath.toString(), timeStamp+999);
+        CompletableFuture<StatusCode> flushed = tablesManager.flush(ssTableMetaInformation2);
 
         Response<String> value = tablesManager.get("Joshi1");
         Assertions.assertEquals("value-Joshi1-2", value.getResult());
 
+        flushed.get();
         //cleanup
         Files.deleteIfExists(ssTableMetaInformation1.getSsTableFilePath());
         Files.deleteIfExists(ssTableMetaInformation2.getSsTableFilePath());

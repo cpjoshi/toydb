@@ -24,26 +24,22 @@ public class SSTablesManager {
 
     public Response<String> get(String key) {
         // scan all SSTables from latest to oldest
-        for (Map.Entry<Long, SSTableMetaInformation> sstable: sstables.entrySet()) {
+        for (Map.Entry<Long, SSTableMetaInformation> sstable : sstables.entrySet()) {
             SSTableMetaInformation ssTableMetaInformation = sstable.getValue();
 
             // it's possible that SSTable is in the process of being written to the disk.
             // For this case we will acquire the memtable reference and check in memtable
-            IMemTable memTable = ssTableMetaInformation.acquireMemtableReference();
-            try {
-                if (memTable == null) {
-                    // this SSTable is flushed to disk, read from the SSTable
-                    Map<String, Value<String>> map = ssTableReader.get(key, ssTableMetaInformation);
-                    if (!map.containsKey(key) || map.get(key).isDeleted()) {
-                        return new Response<>(StatusCode.NotFound);
-                    }
-
-                    return new Response<>(StatusCode.Ok, map.get(key).getVal());
-                } else if (memTable.containsKey(key)) {
-                    return memTable.get(key);
+            IMemTable memTable = ssTableMetaInformation.getMemTable();
+            if (memTable == null) {
+                // this SSTable is flushed to disk, read from the SSTable
+                Map<String, Value<String>> map = ssTableReader.get(key, ssTableMetaInformation);
+                if (map.containsKey(key)) {
+                    return map.get(key).isDeleted() ?
+                            new Response<>(StatusCode.NotFound) :
+                            new Response<>(StatusCode.Ok, map.get(key).getVal());
                 }
-            } finally {
-                ssTableMetaInformation.releaseMemtableReference();
+            } else if (memTable.containsKey(key)) {
+                return memTable.get(key);
             }
         }
         return new Response<>(StatusCode.NotFound);

@@ -1,3 +1,7 @@
+#toydb test directories
+toydbfiles/
+toydbTestFiles/
+
 # Compiled class file
 *.class
 

@@ -12,10 +12,18 @@ public class SSTableMetaInformation {
     private long timestamp;
     private IMemTable memTable;
     private String baseDir;
-    private AtomicInteger memTableRefernece = new AtomicInteger(0);
 
     public SSTableMetaInformation(IMemTable memTable, String baseDir) {
         timestamp = System.nanoTime();
+        sstableFileName = String.format("SST.%d.dat", timestamp);
+        sstableIndexFileName = String.format("SSTIndex.%d.dat", timestamp);
+        sstableSparseIndex = new TreeMap<String, SparseIndexEntrySize>();
+        this.memTable = memTable;
+        this.baseDir = baseDir;
+    }
+
+    public SSTableMetaInformation(IMemTable memTable, String baseDir, Long timestamp) {
+        this.timestamp = timestamp;
         sstableFileName = String.format("SST.%d.dat", timestamp);
         sstableIndexFileName = String.format("SSTIndex.%d.dat", timestamp);
         sstableSparseIndex = new TreeMap<String, SparseIndexEntrySize>();
@@ -43,16 +51,8 @@ public class SSTableMetaInformation {
         return sstableSparseIndex;
     }
 
-    public IMemTable acquireMemtableReference() {
-        memTableRefernece.incrementAndGet();
+    public IMemTable getMemTable() {
         return memTable;
-    }
-
-    public void releaseMemtableReference() {
-        int reference = memTableRefernece.decrementAndGet();
-        if(reference <= 0) {
-            memTable = null;
-        }
     }
 
     public void setMemTable(IMemTable memTable) {

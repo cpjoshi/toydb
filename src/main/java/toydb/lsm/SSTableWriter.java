@@ -37,7 +37,7 @@ public class SSTableWriter implements ISSTableWriter {
     }
 
     public StatusCode flush(SSTableMetaInformation sstableMetaData) throws IOException {
-        IMemTable memTable = sstableMetaData.acquireMemtableReference();
+        IMemTable memTable = sstableMetaData.getMemTable();
         try (
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(baos);
@@ -73,7 +73,7 @@ public class SSTableWriter implements ISSTableWriter {
             //}
             return StatusCode.Ok;
         } finally {
-            sstableMetaData.releaseMemtableReference();
+            sstableMetaData.setMemTable(null);
         }
     }
 }
