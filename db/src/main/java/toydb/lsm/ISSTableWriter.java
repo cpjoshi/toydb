@@ -1,7 +1,6 @@
 package toydb.lsm;
 
 import toydb.common.StatusCode;
-import toydb.lsm.IMemTable;
 
 import java.util.concurrent.CompletableFuture;
 

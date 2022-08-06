@@ -68,6 +68,11 @@ public class ToyDb implements IToyDb {
         return null;
     }
 
+    @Override
+    public void shutDown() {
+        memTablePeriodicFlushService.shutdown();
+    }
+
     private IMemTable getNewMemTable(ToyDbConfiguration configuration) {
         return (configuration.getMemTableType() == MemTableType.SkipList)
                 ? new MemTableConcurrentSkipListMap() : new MemTableTreeMapWithReadWriteLock();

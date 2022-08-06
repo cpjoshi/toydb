@@ -3,7 +3,6 @@ package toydb.lsm;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class SSTableMetaInformation {
     private String sstableFileName;

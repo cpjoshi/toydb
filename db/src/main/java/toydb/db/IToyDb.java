@@ -11,4 +11,5 @@ public interface IToyDb {
     StatusCode set(String key, String value);
     StatusCode delete(String key);
     Response<Map<String, String>> batchGet(List<String> keys);
+    void shutDown();
 }

@@ -1,7 +1,5 @@
 package toydb.common;
 
-import toydb.common.StatusCode;
-
 public class Response<T> {
     private StatusCode status;
     private T result = null;

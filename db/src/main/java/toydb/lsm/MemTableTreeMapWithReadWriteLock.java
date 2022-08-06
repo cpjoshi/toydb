@@ -3,7 +3,6 @@ package toydb.lsm;
 import toydb.common.Response;
 import toydb.common.StatusCode;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
