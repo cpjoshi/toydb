@@ -15,7 +15,6 @@ toydbTestFiles/
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
@@ -100,4 +99,3 @@ atlassian-ide-plugin.xml
 #gradle and build
 .gradle/
 build/
-gradle/
