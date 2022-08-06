@@ -15,6 +15,7 @@ toydbTestFiles/
 .mtj.tmp/
 
 # Package Files #
+*.jar
 *.war
 *.nar
 *.ear
