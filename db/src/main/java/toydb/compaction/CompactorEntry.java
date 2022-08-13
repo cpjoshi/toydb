@@ -1,15 +1,23 @@
 package toydb.compaction;
 
+import toydb.lsm.Value;
+
 import java.util.Comparator;
 import java.util.Objects;
 
 class CompactorEntry {
     private final String key;
     private final int fileSequenceNumber;
+    private final Value Value;
 
     public CompactorEntry(String key, int fileSequenceNumber) {
+        this(fileSequenceNumber, key, null);
+    }
+
+    public CompactorEntry(int fileSequenceNumber, String key, Value value) {
         this.key = key;
         this.fileSequenceNumber = fileSequenceNumber;
+        this.Value = value;
     }
 
     public String getKey() {
@@ -18,6 +26,10 @@ class CompactorEntry {
 
     public int getFileSequenceNumber() {
         return fileSequenceNumber;
+    }
+
+    public Value getValue() {
+        return this.Value;
     }
 
     @Override
