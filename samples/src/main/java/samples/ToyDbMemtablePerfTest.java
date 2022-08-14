@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-public class ToyDbPerfTestProg {
+public class ToyDbMemtablePerfTest {
     private static ExecutorService pool = Executors.newFixedThreadPool(8);
     private static ExecutorCompletionService<Boolean> cs = new ExecutorCompletionService<>(pool);
 

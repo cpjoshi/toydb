@@ -31,7 +31,7 @@ class SSTableIteratorTest {
         }
 
         Arrays.stream(keys).forEach(k -> memTable.set(k, String.format("value-%s", k)));
-        SSTableWriter writer = new SSTableWriter(new TableEntryBinarySerializer());
+        SSTableWriter writer = new SSTableWriter(new TableEntryBinarySerializer(), 4);
         SSTableMetaInformation ssTableMetaInformation = new SSTableMetaInformation(memTable, testsPath.toString());
         writer.flush(ssTableMetaInformation);
 

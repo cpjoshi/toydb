@@ -1,6 +1,7 @@
 package toydb.db;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import toydb.common.Response;
 import toydb.common.StatusCode;
@@ -15,6 +16,7 @@ class ToyDbTest {
     private static ExecutorCompletionService<Boolean> cs = new ExecutorCompletionService<>(pool);
 
     @Test
+    @Order(1)
     void setAndGetOneValue_MemTableHashMapWithReadWriteLock() {
         ToyDbConfiguration config = ToyDbConfiguration.builder()
                 .with(MemTableType.SkipList)
@@ -40,15 +42,11 @@ class ToyDbTest {
     }
 
     @Test
+    @Order(2)
     void getFromPersistedSSTableTest() throws InterruptedException {
         ToyDbConfiguration config = ToyDbConfiguration.builder()
                 .with(MemTableType.SkipList)
-                .with(new Comparator<String>() {
-                    @Override
-                    public int compare(String o1, String o2) {
-                        return o1.compareTo(o2);
-                    }
-                })
+                .with((o1, o2) -> o1.compareTo(o2))
                 .withMemTableFlushThreshold(9)
                 .build();
 
@@ -85,22 +83,17 @@ class ToyDbTest {
     }
 
     @Test
+    @Order(3)
     void getFromMayNotBePersistedSSTableTest() throws InterruptedException {
         ToyDbConfiguration config = ToyDbConfiguration.builder()
                 .with(MemTableType.SkipList)
-                .with(new Comparator<String>() {
-                    @Override
-                    public int compare(String o1, String o2) {
-                        return o1.compareTo(o2);
-                    }
-                })
+                .with((o1, o2) -> o1.compareTo(o2))
                 .withMemTableFlushThreshold(9)
                 .build();
 
         IToyDb toyDb = new ToyDb(config);
 
         String[] keys = {"Joshi07", "Joshi06", "Joshi00", "Joshi01", "Joshi08", "Joshi02", "Joshi09", "Joshi03", "Joshi04", "Joshi05", "Joshi10", "Joshi11"};
-        CountDownLatch waiter = new CountDownLatch(1);
         Arrays.stream(keys).parallel().forEach(key -> {
             toyDb.set(key, "value-" + key);
         });
@@ -113,12 +106,12 @@ class ToyDbTest {
 
         //test get value from second SSTable
         Response<String> response = toyDb.get("Joshi19");
-        Assertions.assertEquals(StatusCode.Ok, response.getStatus());
+        Assertions.assertEquals(StatusCode.Ok, response.getStatus(), "Joshi19 was not found");
         Assertions.assertEquals(response.getResult(), "value-Joshi19");
 
         //test get value from first SSTable
         response = toyDb.get("Joshi00");
-        Assertions.assertEquals(StatusCode.Ok, response.getStatus());
+        Assertions.assertEquals(StatusCode.Ok, response.getStatus(), "Joshi00 was not found");
         Assertions.assertEquals(response.getResult(), "value-Joshi00");
     }
 }

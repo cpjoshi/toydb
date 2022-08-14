@@ -28,7 +28,7 @@ class SSTablesManagerTest {
     @Test
     @Order(1)
     void testGetSSTablesFlushed() throws IOException, InterruptedException, ExecutionException {
-        SSTablesManager tablesManager = new SSTablesManager(new SSTableWriter(new TableEntryBinarySerializer()),
+        SSTablesManager tablesManager = new SSTablesManager(new SSTableWriter(new TableEntryBinarySerializer(), 4),
                 new SSTableReader(new TableEntryBinarySerializer()));
 
 
@@ -66,7 +66,7 @@ class SSTablesManagerTest {
     @Test
     @Order(2)
     void testGetSSTablesMayNotBeFlushed() throws IOException, InterruptedException, ExecutionException {
-        SSTablesManager tablesManager = new SSTablesManager(new SSTableWriter(new TableEntryBinarySerializer()),
+        SSTablesManager tablesManager = new SSTablesManager(new SSTableWriter(new TableEntryBinarySerializer(), 4),
                 new SSTableReader(new TableEntryBinarySerializer()));
 
 

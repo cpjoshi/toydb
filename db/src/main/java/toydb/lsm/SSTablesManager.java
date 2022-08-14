@@ -6,11 +6,13 @@ import toydb.common.StatusCode;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class SSTablesManager {
     private ISSTableWriter writer;
     private ISSTableReader ssTableReader;
-    private TreeMap<Long, SSTableMetaInformation> sstables = new TreeMap<>((o1, o2) -> o2.compareTo(o1));
+    private ConcurrentSkipListMap<Long, SSTableMetaInformation> sstables =
+            new ConcurrentSkipListMap<>((o1, o2) -> o2.compareTo(o1));
 
     public SSTablesManager(ISSTableWriter ssTableWriter, ISSTableReader ssTableReader) {
         this.writer = ssTableWriter;
@@ -18,6 +20,11 @@ public class SSTablesManager {
     }
 
     public CompletableFuture<StatusCode> flush(SSTableMetaInformation ssTableMetaInformation) {
+        if (sstables.containsKey(ssTableMetaInformation.getTimestamp())) {
+            //this happened due to two SSTables getting created in same nanosecond.
+            System.out.printf("Found two memtables with same timestamp. Fixing it...\n");
+            ssTableMetaInformation.setTimestamp(ssTableMetaInformation.getTimestamp()+1);
+        }
         sstables.put(ssTableMetaInformation.getTimestamp(), ssTableMetaInformation);
         return this.writer.submitWriteMemTableToDisk(ssTableMetaInformation);
     }

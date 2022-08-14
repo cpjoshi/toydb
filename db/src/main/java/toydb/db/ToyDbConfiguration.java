@@ -8,6 +8,8 @@ import java.util.Comparator;
 public class ToyDbConfiguration {
     private Comparator<String> keyComparator;
     private int memtableFlushThreshold = 100;
+
+    private int sparseIndexFactor = 4;
     private MemTableType memTableType = MemTableType.SkipList;
     private String baseDir = "./toydbfiles";
 
@@ -31,11 +33,16 @@ public class ToyDbConfiguration {
         return baseDir;
     }
 
+    public int getSparseIndexFactor() {
+        return sparseIndexFactor;
+    }
+
     public static class ToyDbConfigurationBuilder {
         private Comparator<String> keyComparator;
         private int memtableFlushThreshold = 100;
         private MemTableType memTableType;
         private String baseDir = "./toydbfiles";
+        private int sparseIndexFactor = 4;
 
         public ToyDbConfiguration build() {
             if(!Files.exists(Paths.get(baseDir))) {
@@ -51,6 +58,7 @@ public class ToyDbConfiguration {
             instance.memtableFlushThreshold = this.memtableFlushThreshold;
             instance.memTableType = this.memTableType;
             instance.baseDir = this.baseDir;
+            instance.sparseIndexFactor = this.sparseIndexFactor;
             return instance;
         }
         
@@ -71,6 +79,11 @@ public class ToyDbConfiguration {
 
         public ToyDbConfigurationBuilder with(String baseDir) {
             this.baseDir = baseDir;
+            return this;
+        }
+
+        public ToyDbConfigurationBuilder withSparseIndexFactor(int sparseIndexFactor) {
+            this.sparseIndexFactor = sparseIndexFactor;
             return this;
         }
     }

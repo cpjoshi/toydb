@@ -16,8 +16,10 @@ public class SSTableWriter implements ISSTableWriter {
     private int sparseIndexFactor = 4;
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    public SSTableWriter(ITableEntrySerializer serializer) {
+    public SSTableWriter(ITableEntrySerializer serializer, int sparseIndexFactor)
+    {
         this.serializer = serializer;
+        this.sparseIndexFactor = sparseIndexFactor;
     }
 
     @Override

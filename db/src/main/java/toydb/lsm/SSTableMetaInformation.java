@@ -8,6 +8,11 @@ public class SSTableMetaInformation {
     private String sstableFileName;
     private String sstableIndexFileName;
     private TreeMap<String, SparseIndexEntrySize> sstableSparseIndex;
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     private long timestamp;
     private IMemTable memTable;
     private String baseDir;

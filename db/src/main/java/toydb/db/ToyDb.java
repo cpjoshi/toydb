@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ToyDb implements IToyDb {
@@ -28,7 +29,7 @@ public class ToyDb implements IToyDb {
         this.configuration = configuration;
         this.memTable = new AtomicReference<>(getNewMemTable(configuration));
         this.keyComparator = configuration.getKeyComparator();
-        this.sstableWriter = new SSTableWriter(new TableEntryBinarySerializer());
+        this.sstableWriter = new SSTableWriter(new TableEntryBinarySerializer(), configuration.getSparseIndexFactor());
         this.ssTableReader = new SSTableReader(new TableEntryBinarySerializer());
         ssTablesManager = new SSTablesManager(this.sstableWriter, this.ssTableReader);
 
@@ -54,7 +55,11 @@ public class ToyDb implements IToyDb {
     @Override
     public StatusCode set(String key, String value) {
         IMemTable table = memTable.get();
-        return table.set(key, value);
+        StatusCode statusCode = table.set(key, value);
+        if (table.size() % configuration.getMemtableFlushThreshold() == 0) {
+            memTablePeriodicFlushService.submit(() -> flushMemTableToDisk(configuration));
+        }
+        return statusCode;
     }
 
     @Override
@@ -82,8 +87,8 @@ public class ToyDb implements IToyDb {
         IMemTable table = memTable.get();
         if (table.size() >= configuration.getMemtableFlushThreshold()) {
             System.out.printf("DiskIO memtable-size: %d\n", table.size());
-            IMemTable tmpTable = memTable.getAndSet(getNewMemTable(configuration));
-            ssTablesManager.flush(new SSTableMetaInformation(tmpTable, configuration.getBaseDir()));
+            ssTablesManager.flush(new SSTableMetaInformation(table, configuration.getBaseDir()));
+            memTable.getAndSet(getNewMemTable(configuration));
         }
     }
 }
