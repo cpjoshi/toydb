@@ -5,86 +5,62 @@ import toydb.lsm.Value;
 import java.util.*;
 
 public class Compactor {
-    private final List<String> mergedFiles;
     private final PriorityQueue<CompactorEntry> compactorKeys;
-    private final List<CompactorInputFile> compactorInputFiles;
+    private final List<InputSSTable> inputSSTables;
+    private final OutputSSTable outputSSTable;
 
-    public Compactor(List<String> inputFiles) {
-        mergedFiles = new LinkedList<>();
+    public Compactor(List<InputSSTable> inputSSTables) {
         compactorKeys = new PriorityQueue<>(CompactorEntry.GetComparator());
-
-        compactorInputFiles = new ArrayList<>();
-        for (int i = 0; i < inputFiles.size(); i++) {
-            CompactorInputFile compactorInputFile = new CompactorInputFile();
-            compactorInputFile.fileSequenceNumber = i;
-            compactorInputFile.inputFile = inputFiles.get(i);
-            compactorInputFiles.add(compactorInputFile);
-        }
-    }
-
-    public List<String> getMergedFiles() {
-        return mergedFiles;
+        this.inputSSTables = inputSSTables;
+        this.outputSSTable = new OutputSSTable();
     }
 
     public void run() {
-        try {
-            mergedFiles.clear();
-            openInputSSTables();
-            primeInputs();
+        outputSSTable.clear();
+        primeInputs();
 
-            do {
-                CompactorEntry nextEntry = getNextEntry();
-                writeEntryToOutput(nextEntry);
-                List<CompactorEntry> entriesRemoved = clearObsoleteEntries(nextEntry);
-                fillInputs(entriesRemoved);
-            }
-            while (havePendingEntries());
-        } finally {
-            closeInputSSTables();
+        do {
+            CompactorEntry outputEntry = getNextEntryForOutput();
+            writeEntryToOutput(outputEntry);
+            List<CompactorEntry> entriesRemoved = removeObsoleteEntries(outputEntry);
+            fillInputs(entriesRemoved);
         }
+        while (havePendingEntries());
     }
 
-    private boolean havePendingEntries() {
-        return compactorKeys.size() > 0;
+    public OutputSSTable getOutputSSTable() {
+        return outputSSTable;
     }
 
     private void primeInputs() {
-        for (CompactorInputFile compactorInputFile:compactorInputFiles) {
-            addCompactorEntryFromInputFile(compactorInputFile);
+        for (InputSSTable inputSSTable : inputSSTables) {
+            addCompactorEntryFromInputFile(inputSSTable);
         }
     }
 
-    private void addCompactorEntryFromInputFile(CompactorInputFile compactorInputFile) {
-        if (compactorInputFile.inputFileIterator.hasNext()) {
-            Map.Entry<String, Value<String>> inputEntry = compactorInputFile.inputFileIterator.next();
-            CompactorEntry compactorEntry = new CompactorEntry(
-                    compactorInputFile.fileSequenceNumber,
-                    inputEntry.getKey(),
-                    inputEntry.getValue());
-
-            compactorKeys.add(compactorEntry);
-        }
-    }
-
-    private CompactorEntry getNextEntry() {
+    private CompactorEntry getNextEntryForOutput() {
         CompactorEntry nextEntry = compactorKeys.remove();
         return nextEntry;
     }
 
     private void writeEntryToOutput(CompactorEntry nextEntry) {
-        // TODO:
+        if (nextEntry.getValue().isDeleted()) {
+            return;
+        }
+
+        outputSSTable.getOutputMemTable().set(nextEntry.getKey(), nextEntry.getValue().getVal().toString());
     }
 
-    private List<CompactorEntry> clearObsoleteEntries(CompactorEntry nextEntry) {
+    private List<CompactorEntry> removeObsoleteEntries(CompactorEntry outputEntry) {
         List<CompactorEntry> entriesRemoved = new ArrayList<>();
-        entriesRemoved.add(nextEntry);
+        entriesRemoved.add(outputEntry);
 
         CompactorEntry entry;
         boolean keyIdentifersEqual = false;
 
         do {
             entry = compactorKeys.peek();
-            keyIdentifersEqual = (entry != null && entry.getKey().equals(nextEntry.getKey()));
+            keyIdentifersEqual = (entry != null && entry.getKey().equals(outputEntry.getKey()));
             if (keyIdentifersEqual) {
                 CompactorEntry removedEntry = compactorKeys.remove();
                 entriesRemoved.add(removedEntry);
@@ -97,20 +73,24 @@ public class Compactor {
 
     private void fillInputs(List<CompactorEntry> entriesRemoved) {
         for (CompactorEntry compactorEntry: entriesRemoved) {
-            CompactorInputFile compactorInputFile = compactorInputFiles.get(compactorEntry.getFileSequenceNumber());
-            addCompactorEntryFromInputFile(compactorInputFile);
+            InputSSTable inputSSTable = inputSSTables.get(compactorEntry.getFileSequenceNumber());
+            addCompactorEntryFromInputFile(inputSSTable);
         }
     }
 
-    private void openInputSSTables() {
+    private boolean havePendingEntries() {
+        return compactorKeys.size() > 0;
     }
 
-    private void closeInputSSTables() {
-    }
+    private void addCompactorEntryFromInputFile(InputSSTable inputSSTable) {
+        if (inputSSTable.getInputFileIterator().hasNext()) {
+            Map.Entry<String, Value<String>> inputEntry = inputSSTable.getInputFileIterator().next();
+            CompactorEntry compactorEntry = new CompactorEntry(
+                    inputSSTable.getFileSequenceNumber(),
+                    inputEntry.getKey(),
+                    inputEntry.getValue());
 
-    private class CompactorInputFile {
-        private int fileSequenceNumber;
-        private String inputFile;
-        private Iterator<Map.Entry<String, Value<String>>> inputFileIterator;
+            compactorKeys.add(compactorEntry);
+        }
     }
 }
